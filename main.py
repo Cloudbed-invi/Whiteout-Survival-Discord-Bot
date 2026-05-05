@@ -38,6 +38,35 @@ def keep_alive():
 # Load environment variables
 load_dotenv()
 
+# Setup Turso Redirection for Cloud Persistence
+turso_url = os.environ.get("TURSO_URL")
+turso_token = os.environ.get("TURSO_TOKEN")
+
+if turso_url and turso_token:
+    try:
+        import libsql
+        import sqlite3
+        _original_sqlite3_connect = sqlite3.connect
+
+        def turso_connect(database, *args, **kwargs):
+            # Intercept database file requests and route to Turso
+            db_name = str(database).replace('\\', '/').lower()
+            is_db_file = any(x in db_name for x in ['db/', '.sqlite', '.db'])
+            
+            if is_db_file:
+                return libsql.connect(database=turso_url, auth_token=turso_token)
+            return _original_sqlite3_connect(database, *args, **kwargs)
+
+        sqlite3.connect = turso_connect
+        logger.info("Turso database redirection initialized.")
+    except ImportError:
+        logger.warning("libsql not found. Database redirection disabled.")
+    except Exception as e:
+        logger.error(f"Failed to setup Turso redirection: {e}")
+else:
+    logger.info("Using local SQLite storage (TURSO_URL/TOKEN missing).")
+
+
 def check_and_install_requirements():
     required_packages = {
         'discord.py': 'discord.py',
@@ -423,7 +452,20 @@ if __name__ == "__main__":
     async def on_ready():
         try:
             logger.info(f"Logged in as {bot.user}")
+            
+            # Diagnostic: Check Database Status
+            db_mode = "Cloud (Turso)" if turso_url and turso_token else "Local (SQLite)"
             print(f"{Fore.GREEN}Logged in as {Fore.CYAN}{bot.user}{Style.RESET_ALL}")
+            print(f"{Fore.YELLOW}Database Mode: {Fore.MAGENTA}{db_mode}{Style.RESET_ALL}")
+            
+            if db_mode == "Cloud (Turso)":
+                try:
+                    conn = sqlite3.connect('db/test.sqlite')
+                    conn.close()
+                    print(f"{Fore.GREEN}Turso Connection: {Fore.CYAN}Success ✅{Style.RESET_ALL}")
+                except Exception as e:
+                    print(f"{Fore.RED}Turso Connection: Failed ❌ ({e}){Style.RESET_ALL}")
+
             synced = await bot.tree.sync()
             logger.info(f"Synced {len(synced)} commands.")
         except Exception as e:

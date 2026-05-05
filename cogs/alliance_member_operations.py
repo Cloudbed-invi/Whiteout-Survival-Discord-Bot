@@ -1174,10 +1174,10 @@ class AllianceMemberOperations(commands.Cog):
                                     
                                     if not data.get('data'):
                                         with open(log_file_path, 'a', encoding='utf-8') as log_file:
-                                            log_file.write(f"ERROR: No data found for FID {fid}\n")
+                                            log_file.write(f"ERROR: No data found for FID {fid} (Status 200 but empty data)\n")
                                         error_count += 1
                                         if fid not in error_users:
-                                            error_users.append(fid)
+                                            error_users.append(f"{fid} (Empty Data)")
                                         with open(self.log_file, 'a', encoding='utf-8') as f:
                                             f.write(f"[{timestamp}] No data found for fid: {fid}\n")
                                             f.write(f"[{timestamp}] API Response: {str(data)}\n")
@@ -1192,6 +1192,22 @@ class AllianceMemberOperations(commands.Cog):
                                         await message.edit(embed=embed)
                                         index += 1
                                         continue
+                                else:
+                                    # This handles 403, 404, 500, etc.
+                                    with open(log_file_path, 'a', encoding='utf-8') as log_file:
+                                        log_file.write(f"ERROR: API returned status {response.status} for FID {fid}\n")
+                                    error_count += 1
+                                    error_users.append(f"{fid} (HTTP {response.status})")
+                                    
+                                    embed.set_field_at(
+                                        1,
+                                        name=f"❌ Failed ({error_count}/{total_users})",
+                                        value=", ".join(error_users) or "-",
+                                        inline=False
+                                    )
+                                    await message.edit(embed=embed)
+                                    index += 1
+                                    continue
 
                                     nickname = data['data'].get('nickname')
                                     furnace_lv = data['data'].get('stove_lv', 0)
