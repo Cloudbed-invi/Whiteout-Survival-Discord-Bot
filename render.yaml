@@ -1,0 +1,11 @@
+services:
+  - type: worker
+    name: cloudy-chrono-bot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: DISCORD_TOKEN
+        sync: false # You will set this in the Render dashboard
+      - key: PYTHON_VERSION
+        value: 3.10.0

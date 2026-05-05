@@ -1,0 +1,18 @@
+# Environment variables
+.env
+bot_token.txt
+
+# Databases
+db/*.sqlite
+*.sqlite
+
+# Logs
+*.log
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+.venv/

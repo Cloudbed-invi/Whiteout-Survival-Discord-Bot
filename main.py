@@ -4,6 +4,22 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 import sys
 import os
 import subprocess
+import logging
+from dotenv import load_dotenv
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s:%(levelname)s:%(name)s: %(message)s',
+    handlers=[
+        logging.FileHandler("bot.log"),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger('CloudyBot')
+
+# Load environment variables
+load_dotenv()
 
 def check_and_install_requirements():
     required_packages = {
@@ -241,14 +257,20 @@ if __name__ == "__main__":
 
     init(autoreset=True)
 
-    token_file = 'bot_token.txt'
-    if not os.path.exists(token_file):
-        bot_token = input("Enter the bot token: ")
-        with open(token_file, 'w') as f:
-            f.write(bot_token)
-    else:
-        with open(token_file, 'r') as f:
-            bot_token = f.read().strip()
+    # Load token from environment variable
+    bot_token = os.getenv('DISCORD_TOKEN')
+    
+    if not bot_token:
+        # Fallback to bot_token.txt for backward compatibility
+        token_file = 'bot_token.txt'
+        if not os.path.exists(token_file):
+            logger.error("No DISCORD_TOKEN found in .env and bot_token.txt does not exist.")
+            bot_token = input("Enter the bot token: ")
+            with open(token_file, 'w') as f:
+                f.write(bot_token)
+        else:
+            with open(token_file, 'r') as f:
+                bot_token = f.read().strip()
 
     if not os.path.exists('db'):
         os.makedirs('db')
@@ -354,8 +376,10 @@ if __name__ == "__main__":
     @bot.event
     async def on_ready():
         try:
+            logger.info(f"Logged in as {bot.user}")
             print(f"{Fore.GREEN}Logged in as {Fore.CYAN}{bot.user}{Style.RESET_ALL}")
             synced = await bot.tree.sync()
+            logger.info(f"Synced {len(synced)} commands.")
         except Exception as e:
             print(f"Error syncing commands: {e}")
 
