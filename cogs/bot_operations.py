@@ -1210,6 +1210,50 @@ class BotOperations(commands.Cog):
         except Exception as e:
             return False
 
+    @commands.command(name="status")
+    async def bot_status_debug(self, ctx):
+        """Check bot and database status (Debug)"""
+        # Check if user is admin
+        self.settings_cursor.execute("SELECT is_initial FROM admin WHERE id = ?", (ctx.author.id,))
+        admin_result = self.settings_cursor.fetchone()
+        if not admin_result or admin_result[0] != 1:
+            await ctx.send("❌ You don't have permission to use this command.")
+            return
+
+        embed = discord.Embed(title="🤖 Cloudy Chrono - System Status", color=discord.Color.blue())
+        
+        # Database Info
+        db_type = "Turso Cloud ☁️" if "libsql" in str(type(self.settings_db)) else "Local SQLite 📁"
+        embed.add_field(name="Database Type", value=f"`{db_type}`", inline=True)
+        
+        # Table Counts
+        try:
+            self.settings_cursor.execute("SELECT COUNT(*) FROM admin")
+            admin_count = self.settings_cursor.fetchone()[0]
+            
+            self.settings_cursor.execute("SELECT COUNT(*) FROM botsettings")
+            settings_count = self.settings_cursor.fetchone()[0]
+            
+            # Use specific connections for other tables
+            with sqlite3.connect('db/alliance.sqlite') as conn:
+                count = conn.execute("SELECT COUNT(*) FROM alliance_list").fetchone()[0]
+                embed.add_field(name="Alliances", value=f"`{count}`", inline=True)
+                
+            with sqlite3.connect('db/users.sqlite') as conn:
+                count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+                embed.add_field(name="Users (FID)", value=f"`{count}`", inline=True)
+
+            with sqlite3.connect('db/giftcode.sqlite') as conn:
+                count = conn.execute("SELECT COUNT(*) FROM gift_codes").fetchone()[0]
+                embed.add_field(name="Gift Codes", value=f"`{count}`", inline=True)
+                
+            embed.add_field(name="Admins", value=f"`{admin_count}`", inline=True)
+        except Exception as e:
+            embed.add_field(name="Error", value=f"Failed to fetch counts: {e}", inline=False)
+
+        embed.set_footer(text=f"Requested by {ctx.author.name}")
+        await ctx.send(embed=embed)
+
     async def check_for_updates(self):
         try:
             response = requests.get(VERSION_URL)

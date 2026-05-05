@@ -1983,9 +1983,9 @@ class CreateGiftCodeModal(discord.ui.Modal):
                         f"**Gift Code Details**\n"
                         f"━━━━━━━━━━━━━━━━━━━━━━\n"
                         f"🎁 **Gift Code:** `{code}`\n"
-                        f"❌ **Status:** Something went wrong (Status: {status})\n"
+                        f"❌ **Status:** Failed (API Response: `{status}`)\n"
                         f"━━━━━━━━━━━━━━━━━━━━━━\n"
-                        "Please check if the player ID is correct and the API is reachable."
+                        "Note: The bot verifies codes using a test account. If that account cannot claim it, the code is not saved."
                     ),
                     color=discord.Color.red()
                 )
