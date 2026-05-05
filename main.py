@@ -6,6 +6,8 @@ import os
 import subprocess
 import logging
 from dotenv import load_dotenv
+from flask import Flask
+from threading import Thread
 
 # Setup logging
 logging.basicConfig(
@@ -17,6 +19,21 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger('CloudyBot')
+
+# Web Server for Render
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Cloudy Bot is alive!"
+
+def run_web_server():
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
+
+def keep_alive():
+    t = Thread(target=run_web_server)
+    t.start()
 
 # Load environment variables
 load_dotenv()
@@ -389,6 +406,10 @@ if __name__ == "__main__":
         
         await check_and_update_files()
         await load_cogs()
+        
+        # Start the web server to keep Render happy
+        keep_alive()
+        
         await bot.start(bot_token)
 
     if __name__ == "__main__":
