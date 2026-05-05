@@ -1211,7 +1211,7 @@ class BotOperations(commands.Cog):
             return False
 
     @commands.command(name="status")
-    async def bot_status_debug(self, ctx):
+    async def system_status_debug(self, ctx):
         """Check bot and database status (Debug)"""
         # Check if user is admin
         self.settings_cursor.execute("SELECT is_initial FROM admin WHERE id = ?", (ctx.author.id,))
