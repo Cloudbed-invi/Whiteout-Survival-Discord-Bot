@@ -220,18 +220,22 @@ class Alliance(commands.Cog):
             ))
 
             if admin_count == 0:
-                await interaction.edit_original_response(embed=embed, view=view)
+                await interaction.followup.send(embed=embed, view=view)
             else:
                 await interaction.response.send_message(embed=embed, view=view)
 
         except Exception as e:
             if not any(error_code in str(e) for error_code in ["10062", "40060"]):
                 print(f"Settings command error: {e}")
-            error_message = "An error occurred while processing your request."
-            if not interaction.response.is_done():
-                await interaction.response.send_message(error_message, ephemeral=True)
-            else:
-                await interaction.followup.send(error_message, ephemeral=True)
+            
+            try:
+                error_message = "An error occurred while processing your request."
+                if not interaction.response.is_done():
+                    await interaction.response.send_message(error_message, ephemeral=True)
+                else:
+                    await interaction.followup.send(error_message, ephemeral=True)
+            except:
+                pass
 
     @commands.Cog.listener()
     async def on_interaction(self, interaction: discord.Interaction):
@@ -641,10 +645,16 @@ class Alliance(commands.Cog):
             except Exception as e:
                 if not any(error_code in str(e) for error_code in ["10062", "40060"]):
                     print(f"Error processing interaction with custom_id '{custom_id}': {e}")
-                await interaction.response.send_message(
-                    "An error occurred while processing your request. Please try again.",
-                    ephemeral=True
-                )
+                
+                # Defensive check to prevent double-response or response to expired interaction
+                try:
+                    error_msg = "An error occurred while processing your request. Please try again."
+                    if not interaction.response.is_done():
+                        await interaction.response.send_message(error_msg, ephemeral=True)
+                    else:
+                        await interaction.followup.send(error_msg, ephemeral=True)
+                except:
+                    pass
 
     async def add_alliance(self, interaction: discord.Interaction):
         if interaction.guild is None:

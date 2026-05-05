@@ -1884,6 +1884,7 @@ class CreateGiftCodeModal(discord.ui.Modal):
         self.add_item(self.giftcode)
     
     async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
         code = self.giftcode.value
         
         try:
@@ -1917,7 +1918,7 @@ class CreateGiftCodeModal(discord.ui.Modal):
                         color=discord.Color.green()
                     )
                     
-                    await interaction.response.send_message(embed=embed, ephemeral=True)
+                    await interaction.followup.send(embed=embed, ephemeral=True)
                     
                 else:
                     embed = discord.Embed(
@@ -1931,7 +1932,7 @@ class CreateGiftCodeModal(discord.ui.Modal):
                         ),
                         color=discord.Color.red()
                     )
-                    await interaction.response.send_message(embed=embed, ephemeral=True)
+                    await interaction.followup.send(embed=embed, ephemeral=True)
             
             elif status == "TIME_ERROR":
                 embed = discord.Embed(
@@ -1945,7 +1946,7 @@ class CreateGiftCodeModal(discord.ui.Modal):
                     ),
                     color=discord.Color.red()
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.followup.send(embed=embed, ephemeral=True)
                 
             elif status == "CDK_NOT_FOUND":
                 embed = discord.Embed(
@@ -1959,7 +1960,7 @@ class CreateGiftCodeModal(discord.ui.Modal):
                     ),
                     color=discord.Color.red()
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.followup.send(embed=embed, ephemeral=True)
                 
             elif status == "USAGE_LIMIT":
                 embed = discord.Embed(
@@ -1973,7 +1974,7 @@ class CreateGiftCodeModal(discord.ui.Modal):
                     ),
                     color=discord.Color.red()
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.followup.send(embed=embed, ephemeral=True)
             
             else:
                 embed = discord.Embed(
@@ -1988,16 +1989,16 @@ class CreateGiftCodeModal(discord.ui.Modal):
                     ),
                     color=discord.Color.red()
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.followup.send(embed=embed, ephemeral=True)
             
         except sqlite3.IntegrityError:
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 "❌ This gift code already exists!",
                 ephemeral=True
             )
         except Exception as e:
             print(f"Error creating gift code: {e}")
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 "❌ An error occurred while creating the gift code.",
                 ephemeral=True
             )
