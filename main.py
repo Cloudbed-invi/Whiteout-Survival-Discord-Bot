@@ -47,7 +47,8 @@ def check_and_install_requirements():
         'python-dotenv': 'python-dotenv',
         'aiohttp-socks': 'aiohttp-socks',
         'pytz': 'pytz',
-        'pyzipper': 'pyzipper'
+        'pyzipper': 'pyzipper',
+        'libsql': 'libsql'
     }
     
     def install_package(package_name):
@@ -94,6 +95,30 @@ if __name__ == "__main__":
     import requests
     import asyncio
     import pkg_resources
+
+    # Turso (libsql) Integration
+    turso_url = os.getenv("TURSO_URL")
+    turso_token = os.getenv("TURSO_TOKEN")
+
+    if turso_url and turso_token:
+        try:
+            import libsql
+            _original_sqlite3_connect = sqlite3.connect
+            
+            def turso_connect(database, *args, **kwargs):
+                # Redirect local sqlite database calls to Turso
+                if isinstance(database, str) and (database.startswith('db/') or database.endswith('.sqlite')):
+                    return libsql.connect(database=turso_url, auth_token=turso_token)
+                return _original_sqlite3_connect(database, *args, **kwargs)
+            
+            # Monkey-patch sqlite3 to use Turso transparently
+            sqlite3.connect = turso_connect
+            logger.info("Turso Migration: Redirecting all SQLite connections to Turso.")
+            print(Fore.CYAN + "Turso Migration Active: Using remote database." + Style.RESET_ALL)
+        except ImportError:
+            logger.warning("libsql package not found. Falling back to local SQLite.")
+        except Exception as e:
+            logger.error(f"Error initializing Turso connection: {e}")
 
     VERSION_URL = "https://raw.githubusercontent.com/Reloisback/Whiteout-Survival-Discord-Bot/refs/heads/main/autoupdateinfo.txt"
 
@@ -302,6 +327,10 @@ if __name__ == "__main__":
     }
 
     connections = {name: sqlite3.connect(path) for name, path in databases.items()}
+
+    # Assign connection to bot for cogs that check for it
+    bot.conn = connections["conn_giftcode"]
+    bot.db_connections = connections
 
     print(Fore.GREEN + "Database connections have been successfully established." + Style.RESET_ALL)
 

@@ -368,9 +368,14 @@ class GiftOperations(commands.Cog):
             return "ERROR"
 
         except Exception as e:
-            with open(log_file_path, 'a', encoding='utf-8') as log_file:
-                log_file.write(f"ERROR in claim_giftcode_rewards_wos: {str(e)}\n")
-                log_file.write(f"STACK TRACE: {traceback.format_exc()}\n")
+            try:
+                if not os.path.exists(self.log_directory):
+                    os.makedirs(self.log_directory)
+                with open(log_file_path, 'a', encoding='utf-8') as log_file:
+                    log_file.write(f"ERROR in claim_giftcode_rewards_wos: {str(e)}\n")
+                    log_file.write(f"STACK TRACE: {traceback.format_exc()}\n")
+            except:
+                print(f"Critical error in logging: {str(e)}")
             return "ERROR"
 
     @tasks.loop(seconds=300)
@@ -1965,6 +1970,21 @@ class CreateGiftCodeModal(discord.ui.Modal):
                         f"🎁 **Gift Code:** `{code}`\n"
                         f"❌ **Status:** Usage limit has been reached\n"
                         f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                    ),
+                    color=discord.Color.red()
+                )
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+            
+            else:
+                embed = discord.Embed(
+                    title="❌ Gift Code Error",
+                    description=(
+                        f"**Gift Code Details**\n"
+                        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                        f"🎁 **Gift Code:** `{code}`\n"
+                        f"❌ **Status:** Something went wrong (Status: {status})\n"
+                        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                        "Please check if the player ID is correct and the API is reachable."
                     ),
                     color=discord.Color.red()
                 )

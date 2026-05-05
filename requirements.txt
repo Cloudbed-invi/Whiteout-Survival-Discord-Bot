@@ -7,3 +7,4 @@ aiohttp-socks
 pytz
 pyzipper
 flask
+libsql
